@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rock Paper Scissors - AI</title>
+    <style>
+        body { font-family: Arial, sans-serif; text-align: center; }
+        img { width: 100px; height: 100px; cursor: pointer; margin: 5px; }
+        #history { margin-top: 20px; max-height: 200px; overflow-y: auto; border: 1px solid #ccc; padding: 10px; width: 300px; display: inline-block; text-align: left; }
+        .choice-container { display: flex; justify-content: center; align-items: center; margin-top: 10px; }
+        .choice-container img { opacity: 0.5; transition: opacity 0.3s; }
+        .choice-container img.active { opacity: 1; }
+        #computer-choice-text { font-size: 20px; font-weight: bold; margin-top: 10px; }
+        #ai-taunt { font-size: 18px; font-style: italic; color: red; margin-top: 10px; }
+    </style>
+</head>
+<body>
+    <h1>Rock Paper Scissors - AI</h1>
+    <label for="difficulty">Select Difficulty:</label>
+    <select id="difficulty">
+        <option value="easy">Easy</option>
+        <option value="medium" selected>Medium</option>
+        <option value="hard">Hard</option>
+    </select>
+    
+    <h2>Player</h2>
+    <div>
+        <img src="rock.png" alt="Rock" onclick="playerChoice('rock')" />
+        <img src="paper.png" alt="Paper" onclick="playerChoice('paper')" />
+        <img src="scissors.png" alt="Scissors" onclick="playerChoice('scissors')" />
+    </div>
+    
+    <h2>Computer's Choice (AI)</h2>
+    <div class="choice-container">
+        <img src="rock.png" alt="Rock" id="computer-rock" />
+        <img src="paper.png" alt="Paper" id="computer-paper" />
+        <img src="scissors.png" alt="Scissors" id="computer-scissors" />
+    </div>
+    
+    <p id="computer-choice-text">Waiting for selection...</p>
+    <p id="ai-taunt"></p>
+    <h2 id="result"></h2>
+    <h3>Player Stats: Wins: <span id="win-count">0</span> | Losses: <span id="loss-count">0</span></h3>
+    <div id="history"></div>
+    
+    <script>
+        let winCount = 0;
+        let lossCount = 0;
+        let playerHistory = [];
+        const historyDiv = document.getElementById('history');
+
+        function playerChoice(choice) {
+            playerHistory.push(choice);
+            const computerChoice = getComputerChoice();
+            showComputerChoice(computerChoice);
+            document.getElementById('computer-choice-text').innerText = `Computer chose: ${computerChoice.toUpperCase()}`;
+            determineWinner(choice, computerChoice);
+        }
+
+        function getComputerChoice() {
+            const difficulty = document.getElementById('difficulty').value;
+            if (difficulty === 'easy') return randomChoice();
+            if (difficulty === 'medium') return patternBasedChoice();
+            return adaptiveAIChoice();
+        }
+
+        function randomChoice() {
+            const choices = ['rock', 'paper', 'scissors'];
+            return choices[Math.floor(Math.random() * choices.length)];
+        }
+
+        function patternBasedChoice() {
+            if (playerHistory.length === 0) return randomChoice();
+            let moveCount = { rock: 0, paper: 0, scissors: 0 };
+            playerHistory.forEach(move => moveCount[move]++);
+            let mostPlayedMove = Object.keys(moveCount).reduce((a, b) => moveCount[a] > moveCount[b] ? a : b);
+            return mostPlayedMove === 'rock' ? 'paper' : mostPlayedMove === 'paper' ? 'scissors' : 'rock';
+        }
+
+        function adaptiveAIChoice() {
+            if (Math.random() > 0.5) return patternBasedChoice();
+            return randomChoice();
+        }
+
+        function showComputerChoice(choice) {
+            document.querySelectorAll('.choice-container img').forEach(img => img.classList.remove('active'));
+            document.getElementById(`computer-${choice}`).classList.add('active');
+        }
+
+        function determineWinner(player, computer) {
+            let resultText = '';
+            if (player === computer) {
+                resultText = "It's a tie!";
+            } else if (
+                (player === 'rock' && computer === 'scissors') ||
+                (player === 'scissors' && computer === 'paper') ||
+                (player === 'paper' && computer === 'rock')
+            ) {
+                resultText = "You win!";
+                winCount++;
+            } else {
+                resultText = "Computer wins!";
+                lossCount++;
+            }
+            
+            document.getElementById('result').innerText = resultText;
+            document.getElementById('win-count').innerText = winCount;
+            document.getElementById('loss-count').innerText = lossCount;
+            showTaunt(resultText);
+            addToHistory(resultText);
+        }
+
+        function showTaunt(result) {
+            const taunts = {
+                win: ["You got lucky! 😠", "Nice one! But can you do it again? 🤨", "I'll get you next time! 😎"],
+                lose: ["Hah! Easy win! 😆", "Too predictable! 🤖", "Try again, human! 😜"]
+            };
+            
+            const tauntText = result.includes("You win") 
+                ? taunts.win[Math.floor(Math.random() * taunts.win.length)] 
+                : taunts.lose[Math.floor(Math.random() * taunts.lose.length)];
+            
+            document.getElementById('ai-taunt').innerText = tauntText;
+        }
+
+        function addToHistory(result) {
+            const entry = document.createElement('div');
+            entry.textContent = `${new Date().toLocaleString()}: ${result}`;
+            historyDiv.prepend(entry);
+        }
+    </script>
+</body>
+</html>
